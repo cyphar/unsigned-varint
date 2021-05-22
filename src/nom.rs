@@ -20,7 +20,10 @@
 //! `nom` combinators to decode unsigned varints.
 
 use crate::decode::{self, Error};
-use nom::{error::ErrorKind, Err as NomErr, IResult, Needed};
+use nom::{
+    error::{Error as NomError, ErrorKind},
+    Err as NomErr, IResult, Needed,
+};
 
 macro_rules! gen {
     ($($type:ident, $d:expr);*) => {
@@ -28,10 +31,10 @@ macro_rules! gen {
             #[doc = " `nom` combinator to decode a variable-length encoded "]
             #[doc = $d]
             #[doc = "."]
-            pub fn $type(input: &[u8]) -> IResult<&[u8], $type, (&[u8], ErrorKind)> {
+            pub fn $type(input: &[u8]) -> IResult<&[u8], $type> {
                 let (n, remain) = decode::$type(input).map_err(|err| match err {
                     Error::Insufficient => NomErr::Incomplete(Needed::Unknown),
-                    Error::Overflow => NomErr::Error((input, ErrorKind::TooLarge)),
+                    Error::Overflow => NomErr::Error(NomError::new(input, ErrorKind::TooLarge)),
                 })?;
                 Ok((remain, n))
             }
